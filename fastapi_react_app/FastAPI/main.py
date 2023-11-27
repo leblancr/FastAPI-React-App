@@ -53,9 +53,31 @@ async def create_transaction(transaction: TransactionBase, db: db_dependency):
     return db_transaction
     
  
+# Get all transactions
 @app.get("/transactions/", response_model=List[TransactionModel])
-async def read_transaction(db: db_dependency, skip: int = 0, limit: int = 100):
+async def read_transactions(db: db_dependency, skip: int = 0, limit: int = 100):
     transactions = db.query(models.Transaction).offset(skip).limit(limit).all()
     return transactions
 
-    
+
+# Get one transaction
+@app.get("/transactions/{transaction_id: int}", response_model=TransactionModel)
+async def read_transaction(db: db_dependency, transaction_id: int):
+    transaction = db.query(models.Transaction).get(transaction_id)
+    return transaction
+
+
+# Delete one transaction
+@app.delete("/transactions/{transaction_id}", response_model=TransactionModel)
+async def delete_transaction(db: db_dependency, transaction_id: int):
+    # Check if the transaction exists
+    transaction = db.query(models.Transaction).filter(models.Transaction.id == transaction_id).first()
+    if transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Delete the transaction
+    db.delete(transaction)
+    db.commit()
+
+    # Return the deleted transaction
+    return transaction

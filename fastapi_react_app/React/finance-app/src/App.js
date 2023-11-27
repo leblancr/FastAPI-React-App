@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react'
-import ReactDeleteRow from 'react-delete-row'
 import api from './api'
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 const App = () => {
     const [transactions, setTransactions] = useState([])
@@ -12,9 +13,15 @@ const App = () => {
         date: ''
     })
 
-    // get data from backend
+    // get all transactions from backend
     const fetchTransactions = async () => {
         const response = await api.get('/transactions/')  // axios, endpoint
+        setTransactions(response.data) // useState
+    }
+
+    // get one transaction from backend
+    const fetchTransaction = async (id) => {
+        const response = await api.get('/transactions/{id}')  // axios, endpoint
         setTransactions(response.data) // useState
     }
 
@@ -40,6 +47,17 @@ const App = () => {
             is_income: false,
             date: ''
         })
+    }
+
+    const deleteTransaction = async (transaction_id) => {
+        try {
+            const response = await api.delete(`/transactions/${transaction_id}`);
+            console.log('Data deleted successfully:', response.data);
+            const response_get = await api.get('/transactions/')  // axios, endpoint
+            setTransactions(response_get.data) // useState
+        } catch (error) {
+            console.error('Error deleting data:', error);
+        }
     }
 
     return (
@@ -103,15 +121,20 @@ const App = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {transactions.map((transaction, i) => { return (
-                            <ReactDeleteRow key={i} data={transaction} onDelete={ transaction => { return window.confirm(`Are you sure?`) }}>
-                                    <td>{transaction.amount}</td>
-                                    <td>{transaction.category}</td>
-                                    <td>{transaction.description}</td>
-                                    <td>{transaction.is_income ? 'Yes' : 'No'}</td>
-                                    <td>{transaction.date}</td>
-                            </ReactDeleteRow>
-                            )})}
+                        {transactions.map((transaction) => (
+                            <tr key={transaction.id}>
+                                <td>{transaction.amount}</td>
+                                <td>{transaction.category}</td>
+                                <td>{transaction.description}</td>
+                                <td>{transaction.is_income ? 'Yes' : 'No'}</td>
+                                <td>{transaction.date}</td>
+                                <td>
+                                    <button onClick={() => deleteTransaction(transaction.id)}>
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </div>
